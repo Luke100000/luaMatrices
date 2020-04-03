@@ -56,7 +56,7 @@ mat = {
 			1, 0, 0, x or 0,
 			0, 1, 0, y or 0,
 			0, 0, 1, z or 0,
-			0, 0, 0, 0,
+			0, 0, 0, 1,
 		})
 	end,
 
@@ -446,6 +446,9 @@ metatable = {
 	end,
 	
 	subm = function(a, size, offsetX, offsetY)
+		size = size or 3
+		offsetX = offsetX or 0
+		offsetY = offsetY or 0
 		if size == 3 then
 			return mat3({
 				a[1+offsetX + offsetY*4], a[2+offsetX + offsetY*4], a[3+offsetX + offsetY*4],
@@ -457,6 +460,8 @@ metatable = {
 				a[1+offsetX + offsetY*4], a[2+offsetX + offsetY*4],
 				a[5+offsetX + offsetY*4], a[6+offsetX + offsetY*4],
 			})
+		else
+			error("invalid size")
 		end
 	end,
 	

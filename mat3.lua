@@ -322,6 +322,8 @@ metatable = {
 	end,
 	
 	subm = function(a, offsetX, offsetY)
+		offsetX = offsetX or 0
+		offsetY = offsetY or 0
 		return mat2({
 			a[1+offsetX + offsetY*3], a[2+offsetX + offsetY*3],
 			a[4+offsetX + offsetY*3], a[5+offsetX + offsetY*3],
