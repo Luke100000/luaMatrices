@@ -1,3 +1,27 @@
+--[[
+MIT License
+
+Copyright (c) 2020 Luke100000
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+--]]
+
 local mat
 local metatable
 
@@ -6,7 +30,11 @@ mat = {
 		if not x then
 			return setmetatable({0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, metatable)
 		elseif type(x) == "table" then
-			return setmetatable(x, metatable)
+			if type(x[1]) == "table" then
+				return setmetatable({x[1][1], x[1][2], x[1][3], x[1][4], x[2][1], x[2][2], x[2][3], x[2][4], x[3][1], x[3][2], x[3][3], x[3][4], x[4][1], x[4][2], x[4][3], x[4][4]}, metatable)
+			else
+				return setmetatable(x, metatable)
+			end
 		elseif type(x) == "number" then
 			return setmetatable({x, y, z, w, x1, y1, z1, w1, x2, y2, z2, w2, x3, y3, z3, w3}, metatable)
 		else
@@ -14,12 +42,63 @@ mat = {
 		end
 	end,
 	
-	getIdentity = function()
+	getIdentity = function(self)
 		return mat({
 			1, 0, 0, 0,
 			0, 1, 0, 0,
 			0, 0, 1, 0,
 			0, 0, 0, 1
+		})
+	end,
+	
+	getTranslate = function(self, x, y, z)
+		return mat({
+			1, 0, 0, x or 0,
+			0, 1, 0, y or 0,
+			0, 0, 1, z or 0,
+			0, 0, 0, 0,
+		})
+	end,
+
+	getScale = function(self, x, y, z)
+		return mat({
+			x, 0, 0, 0,
+			0, y or x, 0, 0,
+			0, 0, z or x, 0,
+			0, 0, 0, 1,
+		})
+	end,
+
+	getRotateX = function(self, rx)
+		local c = math.cos(rx or 0)
+		local s = math.sin(rx or 0)
+		return mat({
+			1, 0, 0, 0,
+			0, c, -s, 0,
+			0, s, c, 0,
+			0, 0, 0, 1,
+		})
+	end,
+
+	getRotateY = function(self, ry)
+		local c = math.cos(ry or 0)
+		local s = math.sin(ry or 0)
+		return mat({
+			c, 0, -s, 0,
+			0, 1, 0, 0,
+			s, 0, c, 0,
+			0, 0, 0, 1,
+		})
+	end,
+
+	getRotateZ = function(self, rz)
+		local c = math.cos(rz or 0)
+		local s = math.sin(rz or 0)
+		return mat({
+			c, s, 0, 0,
+			-s, c, 0, 0,
+			0, 0, 1, 0,
+			0, 0, 0, 1,
 		})
 	end,
 }
@@ -186,6 +265,21 @@ metatable = {
 				a[15] * b,
 				a[16] * b,
 			})
+		elseif b.type == "vec4" then
+			return vec4({
+				a[1] * b[1] + a[2] * b[2] + a[3] * b[3] + a[4] * b[4],
+				a[5] * b[1] + a[6] * b[2] + a[7] * b[3] + a[8] * b[4],
+				a[9] * b[1] + a[10] * b[2] + a[11] * b[3] + a[12] * b[4],
+				a[13] * b[1] + a[14] * b[2] + a[15] * b[3] + a[16] * b[4],
+				
+			})
+		elseif b.type == "vec3" then
+			return vec3({
+				a[1] * b[1] + a[2] * b[2] + a[3] * b[3] + a[4],
+				a[5] * b[1] + a[6] * b[2] + a[7] * b[3] + a[8],
+				a[9] * b[1] + a[10] * b[2] + a[11] * b[3] + a[12],
+				
+			})
 		else
 			return mat({
 				a[1] * b[1] + a[2] * b[5] + a[3] * b[9] + a[4] * b[13],
@@ -332,12 +426,23 @@ metatable = {
 		}
 	end,
 	
-	--todo: det is too branched-recursive and wont be optimized by the JIT compiler, causing det and therefore inverse to be incredible slow.
 	det = function(a)
-		return a[1] * mat3({a[6], a[7], a[8], a[10], a[11], a[12], a[14], a[15], a[16]}):det()
-			- a[2] * mat3({a[5], a[7], a[8], a[9], a[11], a[12], a[13], a[15], a[16]}):det()
-			+ a[3] * mat3({a[5], a[6], a[8], a[9], a[10], a[12], a[13], a[14], a[16]}):det()
-			- a[4] * mat3({a[5], a[6], a[7], a[9], a[10], a[11], a[13], a[14], a[15]}):det()
+		return a[1] *
+				(a[6] * (a[11] * a[16] - a[12] * a[15])
+				-a[7] * (a[10] * a[16] - a[12] * a[14])
+				+a[8] * (a[10] * a[15] - a[11] * a[14]))
+			- a[2] *
+				(a[5] * (a[11] * a[16] - a[12] * a[15])
+				-a[7] * (a[9] * a[16] - a[12] * a[13])
+				+a[8] * (a[9] * a[15] - a[11] * a[13]))
+			+ a[3] *
+				(a[5] * (a[10] * a[16] - a[12] * a[14])
+				-a[6] * (a[9] * a[16] - a[12] * a[13])
+				+a[8] * (a[9] * a[14] - a[10] * a[13]))
+			- a[4] *
+				(a[5] * (a[10] * a[15] - a[11] * a[14])
+				-a[6] * (a[9] * a[15] - a[11] * a[13])
+				+a[7] * (a[9] * a[14] - a[10] * a[13]))
 	end,
 	
 	subm = function(a, size, offsetX, offsetY)
@@ -369,15 +474,36 @@ metatable = {
 	end,
 	
 	invert = function(a)
-		local a2 = a^2
-		local a3 = a^3
+		local a2 = a*a
+		local a3 = a2*a
 		local t = a:trace()
 		local t2 = a2:trace()
 		local t3 = a3:trace()
 		local d = a:det()
+		local d6 = 1/6
+		local I = setmetatable({d6, 0, 0, 0, 0, d6, 0, 0, 0, 0, d6, 0, 0, 0, 0, d6}, metatable)
 		
-		return (mat:getIdentity() / 6 * (t^3 - 3*t*t2 + 2*t3) - a * 0.5 * (t^2 - t2) + a2 * t - a3) / d
+		return (I * (t*t*t - 3*t*t2 + 2*t3) - a * 0.5 * (t*t - t2) + a2 * t - a3) / d
 	end,
+	
+	--transformations
+	translate = function(a, x, y, z)
+		return mat:getTranslate(x, y, z) * a
+	end,
+	scale = function(a, x, y, z)
+		return mat:getScale(x, y, z) * a
+	end,
+	rotateX = function(a, rx)
+		return mat:getRotateX(rx) * a
+	end,
+	rotateY = function(a, ry)
+		return mat:getRotateY(ry) * a
+	end,
+	rotateZ = function(a, rz)
+		return mat:getRotateZ(rz) * a
+	end,
+	
+	type = "mat4",
 }
 
 return setmetatable(mat, mat)

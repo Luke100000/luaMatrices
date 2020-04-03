@@ -1,3 +1,27 @@
+--[[
+MIT License
+
+Copyright (c) 2020 Luke100000
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+--]]
+
 local mat
 local metatable
 
@@ -6,7 +30,11 @@ mat = {
 		if not x then
 			return setmetatable({0, 0, 0, 0, 0, 0, 0, 0, 0}, metatable)
 		elseif type(x) == "table" then
-			return setmetatable(x, metatable)
+			if type(x[1]) == "table" then
+				return setmetatable({x[1][1], x[1][2], x[1][3], x[2][1], x[2][2], x[2][3], x[3][1], x[3][2], x[3][3]}, metatable)
+			else
+				return setmetatable(x, metatable)
+			end
 		elseif type(x) == "number" then
 			return setmetatable({x, y, z, x1, y1, z1, x2, y2, z2}, metatable)
 		else
@@ -14,10 +42,36 @@ mat = {
 		end
 	end,
 	
-	getIdentity = function()
+	getIdentity = function(self)
 		return mat({
 			1, 0, 0,
 			0, 1, 0,
+			0, 0, 1
+		})
+	end,
+	
+	getTranslate = function(self, x, y)
+		return mat({
+			1, 0, x or 0,
+			0, 1, y or 0,
+			0, 0, 1
+		})
+	end,
+
+	getScale = function(self, x, y)
+		return mat({
+			x, 0, 0,
+			0, y or x, 0,
+			0, 0, 1
+		})
+	end,
+
+	getRotate = function(self, r)
+		local c = math.cos(r or 0)
+		local s = math.sin(r or 0)
+		return mat({
+			c, -s, 0,
+			-s, c, 0,
 			0, 0, 1
 		})
 	end,
@@ -128,6 +182,18 @@ metatable = {
 				a[7] * b,
 				a[8] * b,
 				a[9] * b,
+			})
+		elseif b.type == "vec3" then
+			return vec3({
+				a[1] * b[1] + a[2] * b[2] + a[3] * b[3],
+				a[4] * b[1] + a[5] * b[2] + a[6] * b[3],
+				a[7] * b[1] + a[8] * b[2] + a[9] * b[3],
+				
+			})
+		elseif b.type == "vec2" then
+			return vec2({
+				a[1] * b[1] + a[2] * b[2] + a[3],
+				a[4] * b[1] + a[5] * b[2] + a[6],
 			})
 		else
 			return mat({
@@ -250,9 +316,9 @@ metatable = {
 	end,
 	
 	det = function(a)
-		return a[1] * mat2(a[5], a[6], a[8], a[9]):det()
-			- a[2] * mat2(a[4], a[6], a[7], a[9]):det()
-			+ a[3] * mat2(a[4], a[5], a[7], a[8]):det()
+		return a[1] * (a[5] * a[9] - a[6] * a[8])
+			- a[2] * (a[4] * a[9] - a[6] * a[7])
+			+ a[3] * (a[4] * a[8] - a[5] * a[7])
 	end,
 	
 	subm = function(a, offsetX, offsetY)
@@ -286,6 +352,19 @@ metatable = {
 		local I = (a[1] * a[5] - a[2] * a[4])
 		return mat3({A, D, G, B, E, H, C, F, I}) / a:det()
 	end,
+	
+	--transformations
+	translate = function(a, x, y)
+		return mat:getTranslate(x, y) * a
+	end,
+	scale = function(a, x, y)
+		return mat:getScale(x, y) * a
+	end,
+	rotate = function(a, r)
+		return mat:getRotate(r) * a
+	end,
+	
+	type = "mat3",
 }
 
 return setmetatable(mat, mat)
