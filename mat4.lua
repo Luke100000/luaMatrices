@@ -52,6 +52,9 @@ mat = {
 	end,
 	
 	getTranslate = function(self, x, y, z)
+		if type(x) == "table" then
+			x, y, z = x[1], x[2], x[3]
+		end
 		return mat({
 			1, 0, 0, x or 0,
 			0, 1, 0, y or 0,
@@ -61,6 +64,9 @@ mat = {
 	end,
 
 	getScale = function(self, x, y, z)
+		if type(x) == "table" then
+			x, y, z = x[1], x[2], x[3]
+		end
 		return mat({
 			x, 0, 0, 0,
 			0, y or x, 0, 0,
