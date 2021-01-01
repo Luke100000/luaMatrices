@@ -277,14 +277,12 @@ metatable = {
 				a[5] * b[1] + a[6] * b[2] + a[7] * b[3] + a[8] * b[4],
 				a[9] * b[1] + a[10] * b[2] + a[11] * b[3] + a[12] * b[4],
 				a[13] * b[1] + a[14] * b[2] + a[15] * b[3] + a[16] * b[4],
-				
 			})
 		elseif b.type == "vec3" then
 			return vec3({
 				a[1] * b[1] + a[2] * b[2] + a[3] * b[3] + a[4],
 				a[5] * b[1] + a[6] * b[2] + a[7] * b[3] + a[8],
 				a[9] * b[1] + a[10] * b[2] + a[11] * b[3] + a[12],
-				
 			})
 		else
 			return mat({
@@ -491,10 +489,56 @@ metatable = {
 		local t2 = a2:trace()
 		local t3 = a3:trace()
 		local d = a:det()
-		local d6 = 1/6
-		local I = setmetatable({d6, 0, 0, 0, 0, d6, 0, 0, 0, 0, d6, 0, 0, 0, 0, d6}, metatable)
+		local dth = 1 / d
+		local d6 = (t^3 - 3*t*t2 + 2*t3) / 6
+		local m1 = 0.5 * (t*t - t2)
 		
-		return (I * (t*t*t - 3*t*t2 + 2*t3) - a * 0.5 * (t*t - t2) + a2 * t - a3) / d
+		return mat4({
+			(a2[1] * t - m1 * a[1] - a3[1] + d6) * dth,
+			(a2[2] * t - m1 * a[2] - a3[2]) * dth,
+			(a2[3] * t - m1 * a[3] - a3[3]) * dth,
+			(a2[4] * t - m1 * a[4] - a3[4]) * dth,
+			(a2[5] * t - m1 * a[5] - a3[5]) * dth,
+			(a2[6] * t - m1 * a[6] - a3[6] + d6) * dth,
+			(a2[7] * t - m1 * a[7] - a3[7]) * dth,
+			(a2[8] * t - m1 * a[8] - a3[8]) * dth,
+			(a2[9] * t - m1 * a[9] - a3[9]) * dth,
+			(a2[10] * t - m1 * a[10] - a3[10]) * dth,
+			(a2[11] * t - m1 * a[11] - a3[11] + d6) * dth,
+			(a2[12] * t - m1 * a[12] - a3[12]) * dth,
+			(a2[13] * t - m1 * a[13] - a3[13]) * dth,
+			(a2[14] * t - m1 * a[14] - a3[14]) * dth,
+			(a2[15] * t - m1 * a[15] - a3[15]) * dth,
+			(a2[16] * t - m1 * a[16] - a3[16] + d6) * dth,
+		})
+	end,
+	
+	affineAdd = function(a, b)
+		if b.type == "vec3" then
+			do return a * mat4:getTranslate(b) end
+			return mat({
+				a[1] * b[1], a[2] * b[2], a[3] * b[3], a[4],
+				a[5] * b[1], a[6] * b[2], a[7] * b[3], a[8],
+				a[9] * b[1], a[10] * b[2], a[11] * b[3], a[12],
+				a[13] * b[1], a[14] * b[6], a[15] * b[11], a[16],
+			})
+		else
+			return mat({
+				a[1] * b[1] + a[2] * b[5] + a[3] * b[9],
+				a[1] * b[2] + a[2] * b[6] + a[3] * b[10],
+				a[1] * b[3] + a[2] * b[7] + a[3] * b[11],
+				a[1] * b[4] + a[2] * b[8] + a[3] * b[12] + a[4],
+				a[5] * b[1] + a[6] * b[5] + a[7] * b[9],
+				a[5] * b[2] + a[6] * b[6] + a[7] * b[10],
+				a[5] * b[3] + a[6] * b[7] + a[7] * b[11],
+				a[5] * b[4] + a[6] * b[8] + a[7] * b[12] + a[8],
+				a[9] * b[1] + a[10] * b[5] + a[11] * b[9],
+				a[9] * b[2] + a[10] * b[6] + a[11] * b[10],
+				a[9] * b[3] + a[10] * b[7] + a[11] * b[11],
+				a[9] * b[4] + a[10] * b[8] + a[11] * b[12] + a[12],
+				0, 0, 0, 1
+			})
+		end
 	end,
 	
 	--transformations
