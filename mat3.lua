@@ -24,19 +24,20 @@ SOFTWARE.
 
 local mat
 local metatable
+local methods
 
 mat = {
 	__call = function(self, x, y, z, x1, y1, z1, x2, y2, z2)
 		if not x then
-			return setmetatable({0, 0, 0, 0, 0, 0, 0, 0, 0}, metatable)
+			return setmetatable({ 0, 0, 0, 0, 0, 0, 0, 0, 0 }, metatable)
 		elseif type(x) == "table" then
 			if type(x[1]) == "table" then
-				return setmetatable({x[1][1], x[1][2], x[1][3], x[2][1], x[2][2], x[2][3], x[3][1], x[3][2], x[3][3]}, metatable)
+				return setmetatable({ x[1][1], x[1][2], x[1][3], x[2][1], x[2][2], x[2][3], x[3][1], x[3][2], x[3][3] }, metatable)
 			else
 				return setmetatable(x, metatable)
 			end
 		elseif type(x) == "number" then
-			return setmetatable({x, y, z, x1, y1, z1, x2, y2, z2}, metatable)
+			return setmetatable({ x, y, z, x1, y1, z1, x2, y2, z2 }, metatable)
 		else
 			error("can not construct matrix")
 		end
@@ -60,7 +61,7 @@ mat = {
 			0, 0, 1
 		})
 	end,
-
+	
 	getScale = function(self, x, y, z)
 		if type(x) == "table" then
 			x, y = x[1], x[2]
@@ -71,16 +72,130 @@ mat = {
 			0, 0, z or 1
 		})
 	end,
-
-	getRotate = function(self, r)
-		local c = math.cos(r or 0)
-		local s = math.sin(r or 0)
+	
+	getRotate = function(self, u, a)
+		local l = u.x
+		local m = u.y
+		local n = u.z
+		
+		local sin = math.sin(a)
+		local cos = math.cos(a)
+		
+		return mat3 {
+			l * l * (1 - cos) + cos, m * l * (1 - cos) - n * sin, n * l * (1 - cos) + m * sin,
+			l * m * (1 - cos) + n * sin, m * m * (1 - cos) + cos, n * m * (1 - cos) - l * sin,
+			l * n * (1 - cos) - m * sin, m * n * (1 - cos) + l * sin, n * n * (1 - cos) + cos
+		}
+	end,
+	
+	getRotateX = function(self, rx)
+		local c = math.cos(rx or 0)
+		local s = math.sin(rx or 0)
 		return mat({
-			c, -s, 0,
+			1, 0, 0,
+			0, c, -s,
+			0, s, c
+		})
+	end,
+	
+	getRotateY = function(self, ry)
+		local c = math.cos(ry or 0)
+		local s = math.sin(ry or 0)
+		return mat({
+			c, 0, -s,
+			0, 1, 0,
+			s, 0, c
+		})
+	end,
+	
+	getRotateZ = function(self, rz)
+		local c = math.cos(rz or 0)
+		local s = math.sin(rz or 0)
+		return mat({
+			c, s, 0,
 			-s, c, 0,
 			0, 0, 1
 		})
 	end,
+}
+
+methods = {
+	get = function(a, x, y)
+		return a[(y - 1) * 3 + x]
+	end,
+	
+	set = function(a, x, y, v)
+		a[(y - 1) * 3 + x] = v
+	end,
+	
+	clone = function(a)
+		return mat({
+			a[1], a[2], a[3],
+			a[4], a[5], a[6],
+			a[7], a[8], a[9]
+		})
+	end,
+	
+	unpack = function(a)
+		return {
+			{ a[1], a[2], a[3] },
+			{ a[4], a[5], a[6] },
+			{ a[7], a[8], a[9] },
+		}
+	end,
+	
+	det = function(a)
+		return a[1] * (a[5] * a[9] - a[6] * a[8])
+				- a[2] * (a[4] * a[9] - a[6] * a[7])
+				+ a[3] * (a[4] * a[8] - a[5] * a[7])
+	end,
+	
+	subm = function(a, offsetX, offsetY)
+		offsetX = offsetX or 0
+		offsetY = offsetY or 0
+		return mat2({
+			a[1 + offsetX + offsetY * 3], a[2 + offsetX + offsetY * 3],
+			a[4 + offsetX + offsetY * 3], a[5 + offsetX + offsetY * 3],
+		})
+	end,
+	
+	transpose = function(a)
+		return mat({
+			a[1], a[4], a[7],
+			a[2], a[5], a[8],
+			a[3], a[6], a[9]
+		})
+	end,
+	
+	trace = function(a)
+		return a[1] + a[5] + a[9]
+	end,
+	
+	invert = function(a)
+		local A = a[5] * a[9] - a[6] * a[8]
+		local B = -(a[4] * a[9] - a[6] * a[7])
+		local C = (a[4] * a[8] - a[5] * a[7])
+		local D = -(a[2] * a[9] - a[3] * a[8])
+		local E = (a[1] * a[9] - a[3] * a[7])
+		local F = -(a[1] * a[8] - a[2] * a[7])
+		local G = (a[2] * a[6] - a[3] * a[5])
+		local H = -(a[1] * a[6] - a[3] * a[4])
+		local I = (a[1] * a[5] - a[2] * a[4])
+		return mat3({ A, D, G, B, E, H, C, F, I }) / a:det()
+	end,
+	
+	--transformations
+	translate = function(a, x, y)
+		return mat:getTranslate(x, y) * a
+	end,
+	scale = function(a, x, y)
+		return mat:getScale(x, y) * a
+	end,
+	rotate = function(a, r)
+		return mat:getRotate(r) * a
+	end,
+	
+	type = "mat3",
 }
 
 metatable = {
@@ -194,7 +309,6 @@ metatable = {
 				a[1] * b[1] + a[2] * b[2] + a[3] * b[3],
 				a[4] * b[1] + a[5] * b[2] + a[6] * b[3],
 				a[7] * b[1] + a[8] * b[2] + a[9] * b[3],
-				
 			})
 		elseif b.type == "vec2" then
 			return vec2({
@@ -252,9 +366,9 @@ metatable = {
 	
 	__unm = function(a)
 		return mat({
-			-a[1],	-a[2],	-a[3]
-			-a[4],	-a[5],	-a[6]
-			-a[7],	-a[8],	-a[9],
+			-a[1], -a[2], -a[3],
+			-a[4], -a[5], -a[6],
+			-a[7], -a[8], -a[9],
 		})
 	end,
 	
@@ -277,8 +391,8 @@ metatable = {
 	
 	__eq = function(a, b)
 		return a[1] == b[1] and a[2] == b[2] and a[3] == b[3]
-			and a[4] == b[4] and a[5] == b[5] and a[6] == b[6]
-			and a[7] == b[7] and a[8] == b[8] and a[9] == b[9]
+				and a[4] == b[4] and a[5] == b[5] and a[6] == b[6]
+				and a[7] == b[7] and a[8] == b[8] and a[9] == b[9]
 	end,
 	
 	__len = function()
@@ -287,92 +401,13 @@ metatable = {
 	
 	__tostring = function(a)
 		return string.format("%s\t%s\t%s\n%s\t%s\t%s\n%s\t%s\t%s",
-			a[1],	a[2],	a[3],
-			a[4],	a[5],	a[6],
-			a[7],	a[8],	a[9]
+				a[1], a[2], a[3],
+				a[4], a[5], a[6],
+				a[7], a[8], a[9]
 		)
 	end,
 	
-	__index = function(self, key)
-		return rawget(metatable, key)
-	end,
-	
-	get = function(a, x, y)
-		return a[(y-1)*3 + x]
-	end,
-	
-	set = function(a, x, y, v)
-		a[(y-1)*3 + x] = v
-	end,
-	
-	clone = function(a)
-		return mat({
-			a[1],	a[2],	a[3],
-			a[4],	a[5],	a[6],
-			a[7],	a[8],	a[9]
-		})
-	end,
-	
-	unpack = function(a)
-		return {
-			{a[1],	a[2],	a[3]},
-			{a[4],	a[5],	a[6]},
-			{a[7],	a[8],	a[9]},
-		}
-	end,
-	
-	det = function(a)
-		return a[1] * (a[5] * a[9] - a[6] * a[8])
-			- a[2] * (a[4] * a[9] - a[6] * a[7])
-			+ a[3] * (a[4] * a[8] - a[5] * a[7])
-	end,
-	
-	subm = function(a, offsetX, offsetY)
-		offsetX = offsetX or 0
-		offsetY = offsetY or 0
-		return mat2({
-			a[1+offsetX + offsetY*3], a[2+offsetX + offsetY*3],
-			a[4+offsetX + offsetY*3], a[5+offsetX + offsetY*3],
-		})
-	end,
-	
-	transpose = function(a)
-		return mat({
-			a[1],	a[4],	a[7],
-			a[2],	a[5],	a[8],
-			a[3],	a[6],	a[9]
-		})
-	end,
-	
-	trace = function(a)
-		return a[1] + a[5] + a[9]
-	end,
-	
-	invert = function(a)
-		local A = a[5] * a[9] - a[6] * a[8]
-		local B = -(a[4] * a[9] - a[6] * a[7])
-		local C = (a[4] * a[8] - a[5] * a[7])
-		local D = -(a[2] * a[9] - a[3] * a[8])
-		local E = (a[1] * a[9] - a[3] * a[7])
-		local F = -(a[1] * a[8] - a[2] * a[7])
-		local G = (a[2] * a[6] - a[3] * a[5])
-		local H = - (a[1] * a[6] - a[3] * a[4])
-		local I = (a[1] * a[5] - a[2] * a[4])
-		return mat3({A, D, G, B, E, H, C, F, I}) / a:det()
-	end,
-	
-	--transformations
-	translate = function(a, x, y)
-		return mat:getTranslate(x, y) * a
-	end,
-	scale = function(a, x, y)
-		return mat:getScale(x, y) * a
-	end,
-	rotate = function(a, r)
-		return mat:getRotate(r) * a
-	end,
-	
-	type = "mat3",
+	__index = methods,
 }
 
 return setmetatable(mat, mat)

@@ -24,19 +24,20 @@ SOFTWARE.
 
 local mat
 local metatable
+local methods
 
 mat = {
 	__call = function(self, x, y, x1, y1)
 		if not x then
-			return setmetatable({0, 0, 0, 0}, metatable)
+			return setmetatable({ 0, 0, 0, 0 }, metatable)
 		elseif type(x) == "table" then
 			if type(x[1]) == "table" then
-				return setmetatable({x[1][1], x[1][2], x[2][1], x[2][2]}, metatable)
+				return setmetatable({ x[1][1], x[1][2], x[2][1], x[2][2] }, metatable)
 			else
 				return setmetatable(x, metatable)
 			end
 		elseif type(x) == "number" then
-			return setmetatable({x, y, x1, y1}, metatable)
+			return setmetatable({ x, y, x1, y1 }, metatable)
 		else
 			error("can not construct matrix")
 		end
@@ -48,6 +49,55 @@ mat = {
 			0, 1,
 		})
 	end,
+}
+
+methods = {
+	
+	get = function(a, x, y)
+		return a[(y - 1) * 2 + x]
+	end,
+	
+	set = function(a, x, y, v)
+		a[(y - 1) * 2 + x] = v
+	end,
+	
+	clone = function(a)
+		return mat({
+			a[1], a[2],
+			a[3], a[4]
+		})
+	end,
+	
+	unpack = function(a)
+		return {
+			{ a[1], a[2] },
+			{ a[3], a[4] }
+		}
+	end,
+	
+	det = function(a)
+		return a[1] * a[4] - a[2] * a[3]
+	end,
+	
+	transpose = function(a)
+		return mat({
+			a[1], a[3],
+			a[2], a[4]
+		})
+	end,
+	
+	trace = function(a)
+		return a[1] + a[3]
+	end,
+	
+	invert = function(a)
+		return mat2({
+			a[4], -a[2],
+			-a[3], a[1]
+		}) / a:det()
+	end,
+	
+	type = "mat2",
 }
 
 metatable = {
@@ -118,8 +168,8 @@ metatable = {
 			})
 		elseif b.type == "vec2" then
 			return vec2({
-			a[1] * b[1] + a[2] * b[2],
-			a[3] * b[1] + a[4] * b[2],
+				a[1] * b[1] + a[2] * b[2],
+				a[3] * b[1] + a[4] * b[2],
 			})
 		else
 			return mat({
@@ -157,8 +207,8 @@ metatable = {
 	
 	__unm = function(a)
 		return mat({
-			-a[1],	-a[2],
-			-a[3],	-a[4]
+			-a[1], -a[2],
+			-a[3], -a[4]
 		})
 	end,
 	
@@ -189,60 +239,12 @@ metatable = {
 	
 	__tostring = function(a)
 		return string.format("%s\t%s\n%s\t%s",
-			a[1],	a[2],
-			a[3],	a[4]
+				a[1], a[2],
+				a[3], a[4]
 		)
 	end,
 	
-	__index = function(self, key)
-		return rawget(metatable, key)
-	end,
-	
-	get = function(a, x, y)
-		return a[(y-1)*2 + x]
-	end,
-	
-	set = function(a, x, y, v)
-		a[(y-1)*2 + x] = v
-	end,
-	
-	clone = function(a)
-		return mat({
-			a[1],	a[2],
-			a[3],	a[4]
-		})
-	end,
-	
-	unpack = function(a)
-		return {
-			{a[1],	a[2]},
-			{a[3],	a[4]}
-		}
-	end,
-	
-	det = function(a)
-		return a[1] * a[4] - a[2] * a[3]
-	end,
-	
-	transpose = function(a)
-		return mat({
-			a[1],	a[3],
-			a[2],	a[4]
-		})
-	end,
-	
-	trace = function(a)
-		return a[1] + a[3]
-	end,
-	
-	invert = function(a)
-		return mat2({
-			a[4], -a[2],
-			-a[3], a[1]
-		}) / a:det()
-	end,
-	
-	type = "mat2",
+	__index = methods,
 }
 
 return setmetatable(mat, mat)
