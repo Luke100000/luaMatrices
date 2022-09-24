@@ -20,10 +20,10 @@ local mat4 = require("luaMatrices/mat4")
 --create matrix
 local m1 = mat3(1, 2, 3, 4, 5, 6, 7, 8, 9)
 local m2 = mat3({1, 2, 3, 4, 5, 6, 7, 8, 9})
-local m2 = mat3({{1, 2, 3}, {4, 5, 6}, {7, 8, 9}}) --slower
+local m3 = mat3({{1, 2, 3}, {4, 5, 6}, {7, 8, 9}}) --slower
 
 --use operators
-local m3 = m1 * m2
+local m4 = m1 * m2
 local det = m1:det()
 
 --transform vector

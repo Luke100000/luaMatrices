@@ -80,56 +80,77 @@ mat = {
 	end,
 	
 	getRotate = function(self, u, a)
-		local l = u.x
-		local m = u.y
-		local n = u.z
+		local ux = u.x
+		local uy = u.y
+		local uz = u.z
 		
-		local sin = math.sin(a)
-		local cos = math.cos(a)
+		local s = math.sin(a)
+		local c = math.cos(a)
 		
-		local c = mat3 {
-			l * l * (1 - cos) + cos, m * l * (1 - cos) - n * sin, n * l * (1 - cos) + m * sin, 0.0,
-			l * m * (1 - cos) + n * sin, m * m * (1 - cos) + cos, n * m * (1 - cos) - l * sin, 0.0,
-			l * n * (1 - cos) - m * sin, m * n * (1 - cos) + l * sin, n * n * (1 - cos) + cos, 0.0,
+		local m = mat3 {
+			ux * ux * (1 - c) + c, uy * ux * (1 - c) - uz * s, uz * ux * (1 - c) + uy * s, 0.0,
+			ux * uy * (1 - c) + uz * s, uy * uy * (1 - c) + c, uz * uy * (1 - c) - ux * s, 0.0,
+			ux * uz * (1 - c) - uy * s, uy * uz * (1 - c) + ux * s, uz * uz * (1 - c) + c, 0.0,
 			0.0, 0.0, 0.0, 1.0
 		}
-		return c
+		return m
 	end,
 	
 	getRotateX = function(self, rx)
 		local c = math.cos(rx or 0)
 		local s = math.sin(rx or 0)
-		local c = mat({
+		local m = mat({
 			1, 0, 0, 0,
 			0, c, -s, 0,
 			0, s, c, 0,
 			0, 0, 0, 1,
 		})
-		return c
+		return m
 	end,
 	
 	getRotateY = function(self, ry)
 		local c = math.cos(ry or 0)
 		local s = math.sin(ry or 0)
-		local c = mat({
+		local m = mat({
 			c, 0, -s, 0,
 			0, 1, 0, 0,
 			s, 0, c, 0,
 			0, 0, 0, 1,
 		})
-		return c
+		return m
 	end,
 	
 	getRotateZ = function(self, rz)
 		local c = math.cos(rz or 0)
 		local s = math.sin(rz or 0)
-		local c = mat({
+		local m = mat({
 			c, s, 0, 0,
 			-s, c, 0, 0,
 			0, 0, 1, 0,
 			0, 0, 0, 1,
 		})
-		return c
+		return m
+	end,
+	
+	-- love2d-like 2D transformation
+	getTransform = function(self, x, y, angle, sx, sy, px, py, kx, ky)
+		local c = math.cos(angle)
+		local s = math.sin(angle)
+		
+		local e0 = c * sx - ky * s * sy
+		local e1 = s * sx + ky * c * sy
+		local e4 = kx * c * sx - s * sy
+		local e5 = kx * s * sx + c * sy
+		local e12 = x - ox * e0 - oy * e4
+		local e13 = y - ox * e1 - oy * e5
+		
+		local m = mat({
+			e0, e1, 0, 0,
+			e4, e5, 0, 0,
+			0, 0, 1, 0,
+			e12, e13, 0, 1
+		})
+		return m
 	end,
 }
 
