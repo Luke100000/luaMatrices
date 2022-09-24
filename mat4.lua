@@ -133,7 +133,17 @@ mat = {
 	end,
 	
 	-- love2d-like 2D transformation
-	getTransform = function(self, x, y, angle, sx, sy, px, py, kx, ky)
+	getTransform = function(self, x, y, angle, sx, sy, ox, oy, kx, ky)
+		x = x or 0
+		y = y or 0
+		angle = angle or 0
+		sx = sx or 1
+		sy = sy or sx
+		ox = ox or 0
+		oy = oy or 0
+		kx = kx or 0
+		ky = ky or 0
+		
 		local c = math.cos(angle)
 		local s = math.sin(angle)
 		
@@ -145,10 +155,10 @@ mat = {
 		local e13 = y - ox * e1 - oy * e5
 		
 		local m = mat({
-			e0, e1, 0, 0,
-			e4, e5, 0, 0,
+			e0, e4, 0, e12,
+			e1, e5, 0, e13,
 			0, 0, 1, 0,
-			e12, e13, 0, 1
+			0, 0, 0, 1
 		})
 		return m
 	end,
@@ -271,19 +281,19 @@ methods = {
 	
 	--transformations
 	translate = function(a, x, y, z)
-		return mat:getTranslate(x, y, z) * a
+		return a * mat:getTranslate(x, y, z)
 	end,
 	scale = function(a, x, y, z)
-		return mat:getScale(x, y, z) * a
+		return a * mat:getScale(x, y, z)
 	end,
 	rotateX = function(a, rx)
-		return mat:getRotateX(rx) * a
+		return a * mat:getRotateX(rx)
 	end,
 	rotateY = function(a, ry)
-		return mat:getRotateY(ry) * a
+		return a * mat:getRotateY(ry)
 	end,
 	rotateZ = function(a, rz)
-		return mat:getRotateZ(rz) * a
+		return a * mat:getRotateZ(rz)
 	end,
 	
 	type = "mat4",
@@ -468,6 +478,12 @@ metatable = {
 				a[1] * b[1] + a[2] * b[2] + a[3] * b[3] + a[4],
 				a[5] * b[1] + a[6] * b[2] + a[7] * b[3] + a[8],
 				a[9] * b[1] + a[10] * b[2] + a[11] * b[3] + a[12],
+			})
+		elseif b.type == "vec2" then
+			c = vec2({
+				a[1] * b[1] + a[2] * b[2] + a[4],
+				a[5] * b[1] + a[6] * b[2] + a[8],
+				a[9] * b[1] + a[10] * b[2] + a[12],
 			})
 		else
 			c = mat({

@@ -52,7 +52,6 @@ mat = {
 }
 
 methods = {
-	
 	get = function(a, x, y)
 		return a[(y - 1) * 2 + x]
 	end,

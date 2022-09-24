@@ -186,13 +186,13 @@ methods = {
 	
 	--transformations
 	translate = function(a, x, y)
-		return mat:getTranslate(x, y) * a
+		return a * mat:getTranslate(x, y)
 	end,
 	scale = function(a, x, y)
-		return mat:getScale(x, y) * a
+		return a * mat:getScale(x, y)
 	end,
 	rotate = function(a, r)
-		return mat:getRotate(r) * a
+		return a * mat:getRotate(r)
 	end,
 	
 	type = "mat3",
