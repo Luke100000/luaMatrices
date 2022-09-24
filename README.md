@@ -1,5 +1,7 @@
 # luaMatrices
+
 ## Features
+
 * plain Lua matrix library
 * supports addition (+), subtraction (-), multiplication (*), division (/) (number only), and pow (^)
 * supports equals (==)
@@ -12,6 +14,7 @@
 * can be indexed by 1, 2, 3, ...
 
 ## Usage
+
 ```lua
 local mat2 = require("luaMatrices/mat2")
 local mat3 = require("luaMatrices/mat3")
@@ -19,16 +22,17 @@ local mat4 = require("luaMatrices/mat4")
 
 --create matrix
 local m1 = mat3(1, 2, 3, 4, 5, 6, 7, 8, 9)
-local m2 = mat3({1, 2, 3, 4, 5, 6, 7, 8, 9})
-local m3 = mat3({{1, 2, 3}, {4, 5, 6}, {7, 8, 9}}) --slower
+local m2 = mat3({ 1, 2, 3, 4, 5, 6, 7, 8, 9 }) --recommended
+local m3 = mat3({ { 1, 2, 3 }, { 4, 5, 6 }, { 7, 8, 9 } }) --slower
 
 --use operators
 local m4 = m1 * m2
 local det = m1:det()
 
 --transform vector
-local v1 = mat3:getIdentity():rotate(math.pi):scale(2) * vec2(3, 4)
+local v1 = mat3.getIdentity():rotate(math.pi):scale(2) * vec2(3, 4)
 ```
 
 ## contribution
+
 Please notify me about errors, contributions are welcome.
