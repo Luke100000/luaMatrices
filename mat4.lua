@@ -282,31 +282,89 @@ function methods:invert()
 	})
 end
 
---transformations
+--transformations on itself
 function methods:translate(x, y, z)
 	x = x or 0
 	y = y or 0
 	z = z or 0
+	
 	self[4] = self[1] * x + self[2] * y + self[3] * z + self[4]
 	self[8] = self[5] * x + self[6] * y + self[7] * z + self[8]
 	self[12] = self[9] * x + self[10] * y + self[11] * z + self[12]
+	
 	return self
 end
 
 function methods:scale(x, y, z)
-	return self * matrix.getScale(x, y, z)
+	self[1] = self[1] * (x or 1)
+	self[6] = self[6] * (y or x or 1)
+	self[11] = self[11] * (z or x or 1)
+	
+	return self
 end
 
 function methods:rotateX(rx)
-	return self * matrix.getRotateX(rx)
+	local c = math.cos(rx or 0)
+	local s = math.sin(rx or 0)
+	
+	local self2 = self[2]
+	local self6 = self[6]
+	local self10 = self[10]
+	local self14 = self[14]
+	
+	self[2] = self[2] * c + self[3] * s
+	self[3] = self2 * (-s) + self[3] * c
+	self[6] = self[6] * c + self[7] * s
+	self[7] = self6 * (-s) + self[7] * c
+	self[10] = self[10] * c + self[11] * s
+	self[11] = self10 * (-s) + self[11] * c
+	self[14] = self[14] * c + self[15] * s
+	self[15] = self14 * (-s) + self[15] * c
+	
+	return self
 end
 
 function methods:rotateY(ry)
-	return self * matrix.getRotateY(ry)
+	local c = math.cos(ry or 0)
+	local s = math.sin(ry or 0)
+	
+	local self1 = self[1]
+	local self5 = self[5]
+	local self9 = self[9]
+	local self13 = self[13]
+	
+	self[1] = self[1] * c + self[3] * s
+	self[3] = self1 * (-s) + self[3] * c
+	self[5] = self[5] * c + self[7] * s
+	self[7] = self5 * (-s) + self[7] * c
+	self[9] = self[9] * c + self[11] * s
+	self[11] = self9 * (-s) + self[11] * c
+	self[13] = self[13] * c + self[15] * s
+	self[14] = self[14]
+	self[15] = self13 * (-s) + self[15] * c
+	
+	return self
 end
 
 function methods:rotateZ(rz)
-	return self * matrix.getRotateZ(rz)
+	local c = math.cos(rz or 0)
+	local s = math.sin(rz or 0)
+	
+	local self1 = self[1]
+	local self5 = self[5]
+	local self9 = self[9]
+	local self13 = self[13]
+	
+	self[1] = self[1] * c + self[2] * (-s)
+	self[2] = self1 * s + self[2] * c
+	self[5] = self[5] * c + self[6] * (-s)
+	self[6] = self5 * s + self[6] * c
+	self[9] = self[9] * c + self[10] * (-s)
+	self[10] = self9 * s + self[10] * c
+	self[13] = self[13] * c + self[14] * (-s)
+	self[14] = self13 * s + self[14] * c
+	
+	return self
 end
 
 function metatable.__add(a, b)
