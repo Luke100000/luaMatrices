@@ -296,9 +296,21 @@ function methods:translate(x, y, z)
 end
 
 function methods:scale(x, y, z)
-	self[1] = self[1] * (x or 1)
-	self[6] = self[6] * (y or x or 1)
-	self[11] = self[11] * (z or x or 1)
+	x = x or 1
+	y = y or x
+	z = z or x
+	
+	self[1] = self[1] * x
+	self[2] = self[2] * y
+	self[3] = self[3] * z
+	
+	self[5] = self[5] * x
+	self[6] = self[6] * y
+	self[7] = self[7] * z
+	
+	self[9] = self[9] * x
+	self[10] = self[10] * y
+	self[11] = self[11] * z
 	
 	return self
 end
